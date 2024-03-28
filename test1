@@ -1,3 +1,11 @@
 #grep for regular expressions - search for firewall dependencies like hostname or https
 grep -Eo '(https?://)?([0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]+)?|([a-zA-Z0-9]+(\.[a-zA-Z0-9-]+)+)(:[0-9]+)?' flow.xml | sort | uniq
 #
+import xml.etree.ElementTree as ET
+
+tree = ET.parse('flow.xml')
+root = tree.getroot()
+
+for elem in root.iter():
+    if 'value' in elem.tag and ('http://' in elem.text or 'https://' in elem.text):
+        print(elem.text)
