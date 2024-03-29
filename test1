@@ -23,4 +23,27 @@ for elem in root.iter():
     # Check if elem.text contains any of our patterns
     if elem.text and pattern.search(elem.text):
         print(elem.text)
+#-------------------
+import xml.etree.ElementTree as ET
+import re
+
+# Define a compiled regex pattern to more specifically match endpoint connections
+# This example includes patterns for typical URLs, JDBC connections, and your specified domains
+pattern = re.compile(r'(https?://|jdbc:[\w:]+//)[\w.-]+(\.gso\.aexp\.com|\.aexp\.com)')
+
+# Initialize a set to store unique matches
+unique_endpoints = set()
+
+tree = ET.parse('flow.xml')
+root = tree.getroot()
+
+for elem in root.iter():
+    # Check if elem.text contains any of our specific endpoint connection patterns
+    if elem.text and pattern.search(elem.text):
+        # Add the match to the set of unique endpoints
+        unique_endpoints.add(elem.text.strip())
+
+# Print each unique endpoint connection found
+for endpoint in unique_endpoints:
+    print(endpoint)
 
