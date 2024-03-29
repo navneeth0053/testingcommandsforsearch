@@ -47,31 +47,31 @@ for elem in root.iter():
 for endpoint in unique_endpoints:
     print(endpoint)
 #---------------------
+
 import xml.etree.ElementTree as ET
 import re
 
-# Adjust the regex to capture the entire matching string for JDBC and HTTP(S) URLs
-# Note: \S* matches any non-whitespace characters; adjust as needed for your specific patterns
-pattern = re.compile(r'jdbc:[a-zA-Z]+://\S*?\.(gso\.aexp\.com|gso\.sexp\.com)\S*|https?://\S*?\.(gso\.aexp\.com|gso\.sexp\.com)\S*')
+# Updated regex to specifically capture hostnames and optional ports from the URLs
+pattern = re.compile(
+    r'(?:jdbc:[a-zA-Z]+://|https?://)([^:/\s]+)(:\d+)?'
+)
 
 tree = ET.parse('flow.xml')
 root = tree.getroot()
 
-# Use a set to store unique matches to avoid duplicates
-endpoints = set()
+# Use a set for storing unique hostnames with ports (if available) to avoid duplicates
+hostnames_with_ports = set()
 
 for elem in root.iter():
     if elem.text:
-        # Find all matches within the text, no need to reconstruct from groups
-        matches = pattern.findall(elem.text)
-        # Add each match directly; we're interested in the whole matched string
-        for match in matches:
-            # Since findall might return a tuple due to multiple capture groups, join any non-empty strings from the tuple
-            endpoint = ''.join(match) if isinstance(match, tuple) else match
-            endpoints.add(endpoint)
+        for match in pattern.finditer(elem.text):
+            # Concatenate hostname and port (if port is captured)
+            hostname_with_port = match.group(1) + (match.group(2) if match.group(2) else '')
+            hostnames_with_ports.add(hostname_with_port)
 
-# Print the unique, sorted list of endpoints
-for endpoint in sorted(endpoints):
-    print(endpoint)
+# Print the unique, sorted list of hostnames with ports
+for item in sorted(hostnames_with_ports):
+    print(item)
+
 
 
