@@ -176,41 +176,43 @@ with open(csv_filename, 'w', newline='') as csv_file:
 
 print(f"Output saved to {csv_filename}")
 
-#########Code with all required parameters########
-import xml.etree.ElementTree as ET
+#########Code with all required parameters########import xml.etree.ElementTree as ET
 import re
 import csv
 
-# Update the regex to capture the specified domains with or without the jdbc/http/https prefixes
+# Update the regex to more precisely capture hostnames and optional ports,
+# ensuring it does not inadvertently include leading commas or spaces
 pattern = re.compile(
-    r'(?:jdbc:[a-zA-Z]+://|https?://)?([^:/\s]+(?:\.gso\.aexp\.com|\.phx\.aexp\.com|\.ads\.aexp\.com))(?::(\d+))?'
+    r'(?:jdbc:[a-zA-Z]+://|https?://)?([^\s:,]+(?:\.gso\.aexp\.com|\.phx\.aexp\.com|\.ads\.aexp\.com))(?::(\d+))?'
 )
 
 # Parse the original flow.xml
 tree = ET.parse('flow.xml')
 root = tree.getroot()
 
-# Use a set to store unique hostnames and ports to eliminate duplicates
+# Use a set to store unique hostnames and ports to avoid duplicates
 unique_endpoints = set()
 
 for elem in root.iter():
     if elem.text:
-        matches = pattern.findall(elem.text)
+        matches = pattern.finditer(elem.text)
         for match in matches:
-            # Reconstruct the endpoint from the match and add it to the set
-            hostname_with_port = match[0] + (':' + match[1] if match[1] else '')
-            unique_endpoints.add(hostname_with_port)
+            hostname = match.group(1).strip(", ")
+            port = match.group(2) if match.group(2) else ""
+            # Add the cleaned hostname-port combination to the set
+            unique_endpoints.add((hostname, port))
 
 # Open a CSV file to write the unique hostnames and ports
 csv_filename = "endpoints.csv"
 with open(csv_filename, 'w', newline='') as csv_file:
     writer = csv.writer(csv_file)
-    writer.writerow(['Endpoint'])
+    writer.writerow(['Hostname', 'Port'])
     
-    for endpoint in sorted(unique_endpoints):
-        writer.writerow([endpoint])
+    for endpoint in unique_endpoints:
+        writer.writerow(endpoint)
 
 print(f"Output saved to {csv_filename}")
+
 
 
 
