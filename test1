@@ -177,6 +177,7 @@ with open(csv_filename, 'w', newline='') as csv_file:
 print(f"Output saved to {csv_filename}")
 
 #########Code with all required parameters########import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET
 import re
 import csv
 
