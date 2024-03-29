@@ -50,22 +50,24 @@ for endpoint in unique_endpoints:
 import xml.etree.ElementTree as ET
 import re
 
-# Compile a regex pattern that matches generic JDBC URLs, and http(s) URLs
-pattern = re.compile(r'(jdbc:[a-zA-Z]+://|https?://)\S*?\.(gso\.aexp\.com|gso\.sexp\.com)(:\d+)?')
+# Adjust the regex to capture the entire matching string for JDBC and HTTP(S) URLs
+# Note: \S* matches any non-whitespace characters; adjust as needed for your specific patterns
+pattern = re.compile(r'jdbc:[a-zA-Z]+://\S*?\.(gso\.aexp\.com|gso\.sexp\.com)\S*|https?://\S*?\.(gso\.aexp\.com|gso\.sexp\.com)\S*')
 
 tree = ET.parse('flow.xml')
 root = tree.getroot()
 
-# Use a set to store unique matches
+# Use a set to store unique matches to avoid duplicates
 endpoints = set()
 
 for elem in root.iter():
     if elem.text:
-        # Find all matches of the pattern in elem.text
+        # Find all matches within the text, no need to reconstruct from groups
         matches = pattern.findall(elem.text)
+        # Add each match directly; we're interested in the whole matched string
         for match in matches:
-            # Reconstruct the endpoint from the match groups and add it to the set
-            endpoint = ''.join(match)
+            # Since findall might return a tuple due to multiple capture groups, join any non-empty strings from the tuple
+            endpoint = ''.join(match) if isinstance(match, tuple) else match
             endpoints.add(endpoint)
 
 # Print the unique, sorted list of endpoints
