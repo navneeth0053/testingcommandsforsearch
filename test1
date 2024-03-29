@@ -46,4 +46,30 @@ for elem in root.iter():
 # Print each unique endpoint connection found
 for endpoint in unique_endpoints:
     print(endpoint)
+#---------------------
+import xml.etree.ElementTree as ET
+import re
+
+# Compile a regex pattern that matches generic JDBC URLs, and http(s) URLs
+pattern = re.compile(r'(jdbc:[a-zA-Z]+://|https?://)\S*?\.(gso\.aexp\.com|gso\.sexp\.com)(:\d+)?')
+
+tree = ET.parse('flow.xml')
+root = tree.getroot()
+
+# Use a set to store unique matches
+endpoints = set()
+
+for elem in root.iter():
+    if elem.text:
+        # Find all matches of the pattern in elem.text
+        matches = pattern.findall(elem.text)
+        for match in matches:
+            # Reconstruct the endpoint from the match groups and add it to the set
+            endpoint = ''.join(match)
+            endpoints.add(endpoint)
+
+# Print the unique, sorted list of endpoints
+for endpoint in sorted(endpoints):
+    print(endpoint)
+
 
