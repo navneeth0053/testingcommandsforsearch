@@ -73,5 +73,40 @@ for elem in root.iter():
 for item in sorted(hostnames_with_ports):
     print(item)
 
+#--------
+import xml.etree.ElementTree as ET
+import re
+
+# Original pattern to capture hostnames and optional ports
+pattern = re.compile(
+    r'(?:jdbc:[a-zA-Z]+://|https?://)([^:/\s]+)(:\d+)?'
+)
+
+# Parse the original flow.xml
+tree = ET.parse('flow.xml')
+root = tree.getroot()
+
+# Prepare a new XML structure for the output
+output_root = ET.Element("endpoints")
+for elem in root.iter():
+    if elem.text:
+        for match in pattern.finditer(elem.text):
+            hostname = match.group(1)
+            port = match.group(2) if match.group(2) else ""
+            
+            # Create a new element for each endpoint and populate it
+            endpoint_elem = ET.SubElement(output_root, "endpoint")
+            hostname_elem = ET.SubElement(endpoint_elem, "hostname")
+            hostname_elem.text = hostname
+            port_elem = ET.SubElement(endpoint_elem, "port")
+            port_elem.text = port.lstrip(':')  # Remove leading colon from the port
+
+# Convert the new tree to a string and save it to a file
+tree = ET.ElementTree(output_root)
+with open("endpoints.xml", "wb") as files:
+    tree.write(files)
+
+print("Output saved to endpoints.xml")
+
 
 
