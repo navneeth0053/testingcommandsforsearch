@@ -46,7 +46,7 @@ for elem in root.iter():
 # Print each unique endpoint connection found
 for endpoint in unique_endpoints:
     print(endpoint)
-#---------------------
+#---------------------THIS WORKED ______
 
 import xml.etree.ElementTree as ET
 import re
@@ -108,5 +108,35 @@ with open("endpoints.xml", "wb") as files:
 
 print("Output saved to endpoints.xml")
 
+#----------------------------------------------
+import xml.etree.ElementTree as ET
+import re
+import csv
+
+# Compile the pattern to capture hostnames and optional ports
+pattern = re.compile(
+    r'(?:jdbc:[a-zA-Z]+://|https?://)([^:/\s]+)(:\d+)?'
+)
+
+# Parse the original flow.xml
+tree = ET.parse('flow.xml')
+root = tree.getroot()
+
+# Open a CSV file to write the hostnames and ports
+csv_filename = "endpoints.csv"
+with open(csv_filename, 'w', newline='') as csv_file:
+    writer = csv.writer(csv_file)
+    # Write the header row
+    writer.writerow(['Hostname', 'Port'])
+    
+    for elem in root.iter():
+        if elem.text:
+            for match in pattern.finditer(elem.text):
+                hostname = match.group(1)
+                port = match.group(2) if match.group(2) else ""
+                # Write each hostname and port to the CSV, removing leading colon from the port
+                writer.writerow([hostname, port.lstrip(':')])
+
+print(f"Output saved to {csv_filename}")
 
 
