@@ -1,0 +1,1 @@
+kubectl get nodes -o custom-columns=NAME:.metadata.name,CPU:.status.capacity.cpu,MEMORY:.status.capacity.memory,ROLE:.metadata.labels.'node-role\.kubernetes\.io/worker','node-role\.kubernetes\.io/master' | awk 'NR==1{print $0" "}; NR>1{printf "%s %s %dGi ", $1, $2, $3/1024/1024; if ($4=="<none>") {print "worker"} else {print "master"}}'
