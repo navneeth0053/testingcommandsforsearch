@@ -1,18 +1,17 @@
 kubectl get nodes -o custom-columns=NAME:.metadata.name,CPU:.status.capacity.cpu,MEMORY:.status.capacity.memory,ROLE:.metadata.labels.'node-role\.kubernetes\.io/worker','node-role\.kubernetes\.io/master' | awk 'NR==1{print $0" "}; NR>1{printf "%s %s %dGi ", $1, $2, $3/1024/1024; if ($4=="<none>") {print "worker"} else {print "master"}}'
 
-
 $nodes = kubectl get nodes -o json | ConvertFrom-Json
 
 $nodes.items | ForEach-Object {
     $name = $_.metadata.name
     $cpu = $_.status.capacity.cpu
-    $memoryKi = [int64]$_.status.capacity.memory -replace 'Ki', ''
-    $memoryGi = [math]::round($memoryKi / 1MB, 2)
+    $memoryKi = $_.status.capacity.memory -replace 'Ki', ''
+    $memoryGi = [math]::round([int64]$memoryKi / 1MB, 2)
     $role = "worker"
-    if ($_.metadata.labels."node-role.kubernetes.io/master" -eq $true) {
+    if ($_.metadata.labels."node-role.kubernetes.io/master" -ne $null) {
         $role = "master"
     }
-    elseif ($_.metadata.labels."node-role.kubernetes.io/worker" -eq $true) {
+    elseif ($_.metadata.labels."node-role.kubernetes.io/worker" -ne $null) {
         $role = "worker"
     }
     [PSCustomObject]@{
@@ -22,4 +21,5 @@ $nodes.items | ForEach-Object {
         ROLE   = $role
     }
 } | Format-Table -AutoSize
+
 
