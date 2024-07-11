@@ -31,3 +31,48 @@ if [ $? -eq 0 ]; then
 else
     echo "Failed to copy flow.xml.gz. Please check the pod name, namespace, and directory path."
 fi
+
+-----Second _-----
+
+#!/bin/bash
+
+# Function to prompt user for input
+prompt() {
+    read -p "$1" input
+    echo $input
+}
+
+# Prompt for pod name and namespace
+namespace=$(prompt "Enter the namespace: ")
+pod_name=$(prompt "Enter the pod name: ")
+destination_dir=$(prompt "Enter the destination directory: ")
+
+# Check if destination directory exists
+if [ ! -d "$destination_dir" ]; then
+    echo "Destination directory does not exist. Please create it first."
+    exit 1
+fi
+
+# Define the source paths in the pod and the destination paths on the local system
+source_paths=(
+    "/opt/nifi/nifi-current/conf/flow.xml.gz"
+    "/opt/nifi/nifi-current/conf/bootstrap.conf"
+    "/opt/nifi/nifi-current/conf/nifi.properties"
+)
+
+# Copy each file from the pod to the local system
+for source_path in "${source_paths[@]}"; do
+    file_name=$(basename $source_path)
+    destination_path="$destination_dir/$file_name"
+
+    echo "Copying $file_name from pod $pod_name in namespace $namespace to $destination_path..."
+    kubectl cp $namespace/$pod_name:$source_path $destination_path
+
+    # Check if the copy operation was successful
+    if [ $? -eq 0 ]; then
+        echo "Successfully copied $file_name to $destination_path"
+    else
+        echo "Failed to copy $file_name. Please check the pod name, namespace, and directory path."
+    fi
+done
+
