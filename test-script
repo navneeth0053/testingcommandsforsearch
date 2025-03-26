@@ -1,0 +1,2 @@
+
+for host in $(cat hosts.txt); do echo "$host → $(nslookup $host | grep -oP 'Address: \K\d+\.\d+\.\d+\.\d+' | head -1)"; done
