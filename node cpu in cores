@@ -1,0 +1,1 @@
+kubectl get nodes -o jsonpath='{range .items[*]}{"'$MGMT_CONTEXT',,"}{.metadata.name}{","}{.status.capacity.cpu}{"\n"}{end}'
