@@ -1,1 +1,27 @@
-kubectl get nodes -o jsonpath='{range .items[*]}{"'$MGMT_CONTEXT',,"}{.metadata.name}{","}{.status.capacity.cpu}{"\n"}{end}'
+#!/bin/bash
+OUTPUT_FILE="cluster_nodes.csv"
+
+# Write CSV header
+echo "Management Cluster,Tenant Cluster,Node Name,CPU Cores" > $OUTPUT_FILE
+
+for MGMT_CONTEXT in $(kubectl config get-contexts -o name); do
+  # Switch to management cluster context
+  kubectl config use-context $MGMT_CONTEXT
+
+  # Get nodes for MANAGEMENT cluster
+  kubectl get nodes -o jsonpath='{range .items[*]}{"'$MGMT_CONTEXT',,"}{.metadata.name}{","}{.status.capacity.cpu}{"\n"}{end}' >> $OUTPUT_FILE
+
+  # Get tenant clusters
+  TENANT_CLUSTERS=$(rancher clusters ls -o json | jq -r '.[] | select(.type != "management") | .name')
+
+  for TENANT in $TENANT_CLUSTERS; do
+    # Get tenant cluster's kubeconfig
+    rancher clusters kubeconfig $TENANT > tenant-config.yaml
+
+    # Get tenant nodes
+    kubectl --kubeconfig=tenant-config.yaml get nodes -o jsonpath='{range .items[*]}{"'$MGMT_CONTEXT','$TENANT',"}{.metadata.name}{","}{.status.capacity.cpu}{"\n"}{end}' >> $OUTPUT_FILE
+    rm tenant-config.yaml
+  done
+done
+
+echo "Data exported to $OUTPUT_FILE"
