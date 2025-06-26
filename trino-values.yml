@@ -1,151 +1,139 @@
-starburstPlatformLicense: somelicense
-
-environment: someenv
-sharedSecret: somesharedsecretkey
-
+# values-trino-persistent.yaml (with persistent storage)
 image:
+  repository: <private repo>/trino
+  tag: "474"
   pullPolicy: IfNotPresent
-  repository: <private repo>
-  tag: 443-e.7
-initImage:
-  pullPolicy: IfNotPresent
-  repository: <private repo>
-  tag: 1.5.14
+  pullSecrets:
+    - name: <your-registry-secret>
 
-configProperties:
-  jmx.export: true
-  jmx.rmiregistry.port: 9080
-  jmx.rmiserver.port: 9081
-  jmx.rmiregistry.ssl: false
-  jmx.rmiserver.ssl: false
-  jmx.rmiregistry.authenticate: false
-  jmx.rmiserver.authenticate: false
+# Entrypoint configuration for Trino 474
+coordinator:
+  command: ["/usr/lib/trino/bin/run-trino"]
+  securityContext:
+    runAsUser: 1001
+    fsGroup: 1001
+worker:
+  command: ["/usr/lib/trino/bin/run-trino"]
+  securityContext:
+    runAsUser: 1001
+    fsGroup: 1001
+
+# Storage configuration
+common:
+  storageClass: px-csi-replicated
+  accessModes: ReadWriteOnce
 
 coordinator:
-
-  resources:
-    memory: "8Gi"
-    cpu: 2
-
-  etcFiles:
-    properties:
-      cache.properties: |
-        service-database.user=someserviceaccount
-        service-database.password=somepassword
-        service-database.jdbc-url=jdbc:postgresql://somepostgresqldb:5432/cache_e1
-        starburst.user=caching_service
-        starburst.password=
-        starburst.jdbc-url=jdbc:trino://coordinator:8080
-        #starburst.jdbc-url=jdbc:trino://coordinator:8443?SSL=true&SSLVerification=NONE
-
-      log.properties: |
-        io.trino=INFO
-        #io.trino.server.security.oauth2=DEBUG
-        #io.trino.server.ui.OAuth2WebUiAuthenticationFilter=DEBUG
-        com.starburstdata.presto=INFO
-      password-authenticator-svc.properties: |
-        password-authenticator.name=ldap
-        ldap.url=ldaps://someldap:636
-        ldap.user-bind-pattern=${USER}@somefqdn.com
-        ldap.ssl.truststore.path=/etc/starburst/someldapcerts.pem
-        ldap.bind-dn=
-        ldap.bind-password=
-        ldap.group-auth-pattern=
-        ldap.user-base-dn=
-
-      password-authenticator-usr.properties: |
-        password-authenticator.name=ldap
-        ldap.url=ldaps://someldap:636
-        ldap.user-bind-pattern=${USER}@somefqdn.com
-        ldap.ssl.truststore.path=/etc/starburst/someldapcerts.pem
-        ldap.bind-dn=
-        ldap.bind-password=
-        ldap.group-auth-pattern=
-        ldap.user-base-dn=
-      group-provider.properties: |
-        group-provider.name=ldap
-        ldap.ssl=true
-        ldap.user=someldapuser
-        ldap.url=ldaps://someldap:636
-        ldap.password=
-
-
-        ldap.search-base=someusersearchbase
-        ldap.group.search-filter=(&(objectClass=group))
-        ldap.group.member-attribute=member
-        ldap.group.name-attribute=cn
-        ldap.user.member-of-attribute=memberOf
-        ldap.user.search-filter=(&(objectClass=user)(sAMAccountName={0}))
-
-
-
-  additionalProperties: |
-    # Use the following line to enable Insights
-    insights.persistence-enabled=true
-    insights.metrics-persistence-enabled=true
-    insights.jdbc.url=jdbc:postgresql://somepostgreql:5432/insights_e1
-    insights.jdbc.user=somesvcid
-    insights.jdbc.password=somepswd
-    password-authenticator.config-files=/etc/starburst/password-authenticator-usr.properties,/etc/starburst/password-authenticator-svc.properties
-
-    # Internal Communication Configurations
-    http-server.process-forwarded=true
-    # http-server.authentication.type=PASSWORD
-    http-server.authentication.type=PASSWORD,OAUTH2
-    http-server.authentication.allow-insecure-over-http=true
-    internal-communication.https.required=false
-
-
-# ------------------------------------------------------------------------------
-# Workers
-# ------------------------------------------------------------------------------
-
+  persistentVolume:
+    enabled: true
+    size: 50Gi
+    mountPath: /usr/lib/trino/data
 worker:
+  persistentVolume:
+    enabled: true
+    size: 100Gi
+    mountPath: /usr/lib/trino/data
   replicas: 2
-  deploymentTerminationGracePeriodSeconds: 5 # default is 300; it is actually how long the graceful shutdown waits after it receives the SIGTERM
-  starburstWorkerShutdownGracePeriodSeconds: 5 # default is 120
-  resources:
-    memory: "15Gi"
-    cpu: 3
 
+# Resource allocations
+resources:
+  coordinator:
+    requests:
+      memory: "8Gi"
+      cpu: 2
+    limits:
+      memory: "8Gi"
+      cpu: 2
+  worker:
+    requests:
+      memory: "15Gi"
+      cpu: 3
+    limits:
+      memory: "15Gi"
+      cpu: 3
 
-additionalVolumes:
-  - path: /etc/starburst/axpcerts
-    volume:
-      secret:
-       secretName: starburst-custom-certs
+# Configuration
+config:
+  path: /usr/lib/trino/etc
+  configProperties:
+    jmx.export: true
+    jmx.rmiregistry.port: 9080
+    jmx.rmiserver.port: 9081
+    jmx.rmiregistry.ssl: false
+    jmx.rmiserver.ssl: false
+    jmx.rmiregistry.authenticate: false
+    jmx.rmiserver.authenticate: false
+    http-server.process-forwarded: true
+    http-server.authentication.type: PASSWORD,OAUTH2
+    http-server.authentication.allow-insecure-over-http: true
+    internal-communication.https.required: false
 
-  - path: /etc/starburst/axpsecurity
-    volume:
-      secret:
-       secretName: starburst-custom-security
+  jvm:
+    - "-server"
+    - "-Xmx6G"  # For coordinator (8Gi total)
+    - "-Xmx12G" # For workers (15Gi total)
+    - "-XX:-UseBiasedLocking"
+    - "-XX:+UseG1GC"
+    - "-Djava.security.krb5.conf=/etc/krb5.conf"
+    - "-Djavax.net.ssl.trustStore=/etc/trino/axpcerts/cacerts"
+    - "-Djavax.net.ssl.trustStorePassword=changeit"
+    - "-Dcom.sun.management.jmxremote.rmi.port=9081"
 
-  # - path: /etc/krb5.conf
-  #   volume:
-  #     secret:
-  #      secretName: starburst-custom-security
-  #   subPath: krb5.conf
+# Authentication configuration
+additionalConfigProperties:
+  password-authenticator.name: ldap
+  ldap.url: "ldaps://someldap:636"
+  ldap.user-bind-pattern: "{USER}@somefqdn.com"
+  ldap.ssl.truststore.path: "/etc/trino/axpcerts/someldapcerts.pem"
+  # Add other LDAP parameters as needed
 
-expose:
-  type: "nodePort"
-  nodePort:
-    name: "starburst"
-    ports:
-      http:
-        port: 8080
-        nodePort: 30080
-      https:
-        port: 8443
-        nodePort: 30070
+# Group provider
+groupProvider:
+  name: ldap
+  ldap.ssl: true
+  ldap.user: "someldapuser"
+  ldap.url: "ldaps://someldap:636"
+  ldap.password: ""
+  ldap.search-base: "someusersearchbase"
+  ldap.group.search-filter: "(&(objectClass=group))"
+  ldap.group.member-attribute: "member"
+  ldap.group.name-attribute: "cn"
+  ldap.user.member-of-attribute: "memberOf"
+  ldap.user.search-filter: "(&(objectClass=user)(sAMAccountName={0}))"
 
+# Volumes for certificates
+extraVolumes:
+  - name: axpcerts
+    secret:
+      secretName: starburst-custom-certs
+  - name: axpsecurity
+    secret:
+      secretName: starburst-custom-security
 
-initFile: |
-  #!/bin/bash
-  echo "-Dsun.security.krb5.debug=true" >>/etc/starburst/jvm.config
-  echo "-Dtrino.client.debugKerberos=true" >>/etc/starburst/jvm.config
-  echo "-Djava.security.debug=gssloginconfig,configfile,configparser,logincontext" >>/etc/starburst/jvm.config
-  echo "-Djava.security.krb5.conf=/etc/krb5.conf" >>/etc/starburst/jvm.config
-  echo "-Djavax.net.ssl.trustStore=/etc/starburst/axpcerts/cacerts" >> /etc/starburst/jvm.config
-  echo "-Djavax.net.ssl.trustStorePassword=changeit" >> /etc/starburst/jvm.config
-  echo "-Dcom.sun.management.jmxremote.rmi.port=9081" >> /etc/starburst/jvm.config
-  exec /usr/lib/starburst/bin/run-starburst
+extraVolumeMounts:
+  - name: axpcerts
+    mountPath: /etc/trino/axpcerts
+  - name: axpsecurity
+    mountPath: /etc/trino/axpsecurity
+    # Uncomment for krb5.conf if needed
+    # - name: axpsecurity
+    #   mountPath: /etc/krb5.conf
+    #   subPath: krb5.conf
+
+# Service exposure
+service:
+  type: NodePort
+  ports:
+    http:
+      port: 8080
+      nodePort: 30080
+    # https:
+    #   port: 8443
+    #   nodePort: 30070
+
+# Catalogs
+catalogs:
+  hive: |
+    connector.name=hive
+    hive.metastore.uri=thrift://hive-metastore:9083
+  # Add other catalogs as needed
