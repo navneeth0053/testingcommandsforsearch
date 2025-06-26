@@ -58,3 +58,31 @@ worker:
       cpu: 1
   persistentVolume:
     size: 10Gi
+##########explicitly variable command ####
+
+
+# trino-values.yaml
+coordinator:
+  # Force command visibility
+  command: ["/bin/sh", "-c"]
+  args: 
+    - >
+      echo "Starting Trino Coordinator";
+      ls -l /usr/lib/trino/bin;
+      [ -f /usr/lib/trino/bin/run-trino ] && 
+        echo "Entrypoint found" && 
+        /usr/lib/trino/bin/run-trino ||
+        echo "Entrypoint missing";
+      sleep 3600
+
+worker:
+  # Disable workers temporarily
+  replicas: 0
+
+# Keep your existing image and storage config
+image:
+  repository: <private-registry>/trino
+  tag: "474"
+common:
+  storageClass: directpv
+  
