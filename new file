@@ -1,1 +1,38 @@
 failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "/etc/trino/docker-entrypoint.sh": stat /etc/trino/docker-entrypoint.sh: no such file or directory: unknown
+
+      containers:
+        - name: trino-coordinator
+          image: trino/trino:474
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          env:
+            []
+--
+      containers:
+        - name: trino-worker
+          image: trino/trino:474
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          env:
+            []
+--
+  containers:
+    - name: cli
+      image: trino/trino:474
+      command: ['trino']
+      args:
+      - trino://trino:8080
+      - --user=admin
+      - --debug
+      - --execute=SELECT COUNT(*) FROM tpch.tiny.nation
+      - --no-progress
+  restartPolicy: Never
+
