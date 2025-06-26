@@ -1,23 +1,48 @@
+# trino-values.yaml
 image:
-  repository: <private-registry>/trino  # Air-gapped registry
-  tag: "404"
+  repository: <private-registry>/trino
+  tag: "474"
   pullPolicy: IfNotPresent
   pullSecrets:
-    - name: <your-pull-secret>  # If using private registry
+    - name: <your-registry-secret>
 
-common:
-  storageClass: directpv  # Use DirectPV storage class
-
+# RKE2-specific fix for entrypoint
 coordinator:
-  resources:
-    requests:
-      memory: 4Gi
-      cpu: 1
-  persistentVolume:
-    size: 10Gi  # Adjust as needed
+  command: ["/bin/sh", "-c"]
+  args: ["exec /usr/lib/trino/bin/run-trino"]
+  securityContext:
+    runAsUser: 1001  # Important for RKE2 permission handling
+    fsGroup: 1001
+  volumeMounts:
+    - name: config
+      mountPath: /usr/lib/trino/etc  # Must match new image structure
+      readOnly: true
 
 worker:
-  replicas: 3  # Number of workers
+  command: ["/bin/sh", "-c"]
+  args: ["exec /usr/lib/trino/bin/run-trino"]
+  securityContext:
+    runAsUser: 1001
+    fsGroup: 1001
+  volumeMounts:
+    - name: config
+      mountPath: /usr/lib/trino/etc
+      readOnly: true
+
+# Path configuration
+common:
+  storageClass: directpv
+config:
+  path: /usr/lib/trino/etc  # Critical path update
+
+# Volume configuration
+volumes:
+  - name: config
+    configMap:
+      name: trino-config
+
+# Resource adjustments (example)
+coordinator:
   resources:
     requests:
       memory: 4Gi
@@ -25,13 +50,11 @@ worker:
   persistentVolume:
     size: 10Gi
 
-securityContext:
-  runAsUser: 1000
-  fsGroup: 1000
-
-config:
-  config.properties:
-    query.max-memory: 8GB
-    query.max-memory-per-node: 2GB
-  jvm:
-    - "-Xmx3G"
+worker:
+  replicas: 3
+  resources:
+    requests:
+      memory: 4Gi
+      cpu: 1
+  persistentVolume:
+    size: 10Gi
