@@ -1,3 +1,45 @@
-Errors:
+configmap:
 
-1) Invalid configuration property with prefix '': file does not exist: etc/password-authenticator.properties (for class io.trino.server.security.PasswordAuthenticatorConfig.passwordAuthenticatorFiles[0].<list element>)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trino-password-auth
+  namespace: trino
+data:
+  password-authenticator.properties: |
+    password-authenticator.name=ldap
+    ldap.url=ldaps://ldap.example.com:636
+    ldap.user-bind-pattern=uid=${USER},ou=users,dc=example,dc=com
+    ldap.ssl-truststore-path=/etc/trino/ldap-certs/cacerts.pem
+    ldap.ssl-truststore-password=changeit
+
+kubectl apply -f trino-password-auth-configmap.yaml
+
+
+coordinator:
+  additionalVolumes:
+    - name: password-auth
+      configMap:
+        name: trino-password-auth
+    - name: ldap-certs
+      secret:
+        secretName: ldap-ca-cert
+
+  additionalVolumeMounts:
+    - name: password-auth
+      mountPath: /etc/trino/password-authenticator.properties
+      subPath: password-authenticator.properties
+      readOnly: true
+
+    - name: ldap-certs
+      mountPath: /etc/trino/ldap-certs
+      readOnly: true
+
+  additionalConfigFiles:
+    config.properties: |
+      coordinator=true
+      node-scheduler.include-coordinator=true
+      http-server.http.port=8080
+      http-server.process-forwarded=true
+      http-server.authentication.type=PASSWORD
+      discovery.uri=http://localhost:8080
