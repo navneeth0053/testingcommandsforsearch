@@ -1,19 +1,10 @@
 image:
-  repository: <your-private-registry>/your-custom-trino
+  repository: trinodb/trino
   tag: "474"
   pullPolicy: IfNotPresent
 
 coordinator:
   replicaCount: 1
-
-  resources:
-    requests:
-      memory: "2Gi"
-      cpu: "1"
-    limits:
-      memory: "4Gi"
-      cpu: "2"
-
   config:
     data: |
       coordinator=true
@@ -27,13 +18,8 @@ coordinator:
   jvm:
     data: |
       -server
-      -Xmx2G
+      -Xmx4G
       -XX:+UseG1GC
-      -XX:+UseGCOverheadLimit
-
-  log:
-    data: |
-      io.trino=INFO
 
   catalogs:
     tpch: |
@@ -41,33 +27,17 @@ coordinator:
 
 worker:
   replicaCount: 2
-
-  resources:
-    requests:
-      memory: "2Gi"
-      cpu: "1"
-    limits:
-      memory: "4Gi"
-      cpu: "2"
-
   config:
     data: |
       coordinator=false
       http-server.http.port=8080
-      query.max-memory=2GB
-      query.max-memory-per-node=1GB
       discovery.uri=http://trino-coordinator:8080
 
   jvm:
     data: |
       -server
-      -Xmx2G
+      -Xmx6G
       -XX:+UseG1GC
-      -XX:+UseGCOverheadLimit
-
-  log:
-    data: |
-      io.trino=INFO
 
   catalogs:
     tpch: |
@@ -76,3 +46,18 @@ worker:
 service:
   type: ClusterIP
   port: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  path: /
+  hosts:
+    - trino.example.com  # 🔁 Replace with your actual hostname
+  tls:
+    - hosts:
+        - trino.example.com
+      secretName: trino-tls  # 🔁 Replace with your cert secret name
