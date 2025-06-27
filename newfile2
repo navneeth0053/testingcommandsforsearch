@@ -1,8 +1,2 @@
-Errors:
-
-1) Configuration property 'http-server.forwarded-header' was not used. Did you mean to use 'http-server.process-forwarded', 'http-server.threads.max' or 'http-server.max-heap-memory'?
-
-Warnings:
-
-1) Configuration property 'discovery-server.enabled' is deprecated and should not be used
-
+wget https://repo1.maven.org/maven2/io/trino/trino-cli/474/trino-cli-474-executable.jar -O trino
+chmod +x trino
