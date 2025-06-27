@@ -1,32 +1,29 @@
-+ launcher_opts=(--etc-dir /etc/trino)
-+ grep -s -q node.id /etc/trino/node.properties
-+ launcher_opts+=("-Dnode.id=${HOSTNAME}")
-+ exec /usr/lib/trino/bin/launcher run --etc-dir /etc/trino -Dnode.id=trino-coordinator-577b45c48b-xqklh
+
 WARNING: Using incubator modules: jdk.incubator.vector
 WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
 WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:/usr/lib/trino/lib/org.openjdk.jol_jol-core-0.17.jar)
 WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
 WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
-Jun 27, 2025 9:19:10 PM io.airlift.log.Logger info
+Jun 27, 2025 9:25:04 PM io.airlift.log.Logger info
 INFO: Java version: 24
-2025-06-27T21:19:10.314Z        INFO    main    io.airlift.log.Logging  Logging to stderr
-2025-06-27T21:19:10.323Z        INFO    main    Bootstrap       Loading secrets plugins
-2025-06-27T21:19:10.323Z        INFO    main    Bootstrap       Loading configuration
-2025-06-27T21:19:10.424Z        INFO    main    org.hibernate.validator.internal.util.Version   HV000001: Hibernate Validator 8.0.2.Final
-2025-06-27T21:19:10.574Z        INFO    main    Bootstrap       Initializing logging
-2025-06-27T21:19:10.630Z        INFO    main    io.airlift.log.Logging  Disabling stderr output
+2025-06-27T21:25:04.362Z        INFO    main    io.airlift.log.Logging  Logging to stderr
+2025-06-27T21:25:04.365Z        INFO    main    Bootstrap       Loading secrets plugins
+2025-06-27T21:25:04.365Z        INFO    main    Bootstrap       Loading configuration
+2025-06-27T21:25:04.478Z        INFO    main    org.hibernate.validator.internal.util.Version   HV000001: Hibernate Validator 8.0.2.Final
+2025-06-27T21:25:04.628Z        INFO    main    Bootstrap       Initializing logging
+2025-06-27T21:25:04.701Z        INFO    main    io.airlift.log.Logging  Disabling stderr output
 WARNING: A restricted method in java.lang.System has been called
 WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/usr/lib/trino/lib/net.java.dev.jna_jna-5.17.0.jar)
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-2025-06-27T21:19:11.364Z        WARN    main    oshi.software.os.linux.LinuxOperatingSystem     Did not find udev library in operating system. Some features may not work.
-2025-06-27T21:19:11.698Z        ERROR   main    io.trino.server.Server  Configuration is invalid
+2025-06-27T21:25:05.449Z        WARN    main    oshi.software.os.linux.LinuxOperatingSystem     Did not find udev library in operating system. Some features may not work.
+2025-06-27T21:25:05.778Z        ERROR   main    io.trino.server.Server  Configuration is invalid
 ==========
 
 Errors:
 
-1) Invalid value '"true"' for type io.airlift.http.server.HttpServerConfig$ProcessForwardedMode (property 'http-server.process-forwarded') in order to call [public io.airlift.http.server.HttpServerConfig io.airlift.http.server.HttpServerConfig.setProcessForwarded(io.airlift.http.server.HttpServerConfig$ProcessForwardedMode)]
+1) Invalid value 'PROCESS' for type io.airlift.http.server.HttpServerConfig$ProcessForwardedMode (property 'http-server.process-forwarded') in order to call [public io.airlift.http.server.HttpServerConfig io.airlift.http.server.HttpServerConfig.setProcessForwarded(io.airlift.http.server.HttpServerConfig$ProcessForwardedMode)]
 
 Warnings:
 
