@@ -1,79 +1,116 @@
-image:
-  repository: trinodb/trino
-  tag: "474"
-  pullPolicy: IfNotPresent
-
+COMPUTED VALUES:
+accessControl: {}
+additionalCatalogs: {}
+additionalConfigProperties: []
+additionalExchangeManagerProperties: []
+additionalLogProperties: []
+additionalNodeProperties: []
+auth: {}
+catalogs:
+  tpcds: |
+    connector.name=tpcds
+    tpcds.splits-per-node=4
+  tpch: |
+    connector.name=tpch
+    tpch.splits-per-node=4
+commonLabels: {}
+configMounts: []
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
 coordinator:
-  replicaCount: 1
+  additionalConfigFiles: {}
+  additionalExposedPorts: {}
+  additionalJVMConfig: []
+  additionalVolumeMounts: []
+  additionalVolumes: []
+  affinity: {}
+  annotations: {}
+  catalogs:
+    tpch: |
+      connector.name=tpch
   config:
     data: |
       coordinator=true
       node-scheduler.include-coordinator=true
       http-server.http.port=8080
+      http-server.process-forwarded=true
+      http-server.authentication.allow-insecure-over-http=true
       query.max-memory=2GB
       query.max-memory-per-node=1GB
       discovery-server.enabled=true
       discovery.uri=http://localhost:8080
-
+    memory:
+      heapHeadroomPerNode: ""
+    nodeScheduler:
+      includeCoordinator: false
+    query:
+      maxMemoryPerNode: 1GB
+  configMounts: []
+  deployment:
+    annotations: {}
+    progressDeadlineSeconds: 600
+    revisionHistoryLimit: 10
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
   jvm:
     data: |
       -server
       -Xmx4G
       -XX:+UseG1GC
-
-  catalogs:
-    tpch: |
-      connector.name=tpch
-
-worker:
-  replicaCount: 2
-  config:
-    data: |
-      coordinator=false
-      http-server.http.port=8080
-      discovery.uri=http://trino-coordinator:8080
-
-  jvm:
-    data: |
-      -server
-      -Xmx6G
-      -XX:+UseG1GC
-
-  catalogs:
-    tpch: |
-      connector.name=tpch
-
-service:
-  type: ClusterIP
-  port: 8080
-
-####### Ingress yml ###
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: trino
-  namespace: trino
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: trino.example.com  # 🔁 Replace with your hostname
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: trino
-                port:
-                  number: 8080
-  tls:
-    - hosts:
-        - trino.example.com  # 🔁 Replace with your hostname
-      secretName: trino-tls   # 🔁 Must match existing TLS cert secret
-
+    gcMethod:
+      g1:
+        heapRegionSize: 32M
+      type: UseG1GC
+    maxHeapSize: 8G
+  labels: {}
+  lifecycle: {}
+  livenessProbe: {}
+  nodeSelector: {}
+  readinessProbe: {}
+  replicaCount: 1
+  resources: {}
+  secretMounts: []
+  terminationGracePeriodSeconds: 30
+  tolerations: []
+coordinatorNameOverride: null
+env: []
+envFrom: []
+eventListenerProperties: []
+image:
+  digest: ""
+  pullPolicy: IfNotPresent
+  registry: ""
+  repository: trinodb/trino
+  tag: 474
+  useRepositoryAsSoleImageReference: false
+imagePullSecrets: []
+ingress:
+  annotations: {}
+  className: ""
+  enabled: false
+  hosts: []
+  tls: []
+initContainers: {}
+jmx:
+  coordinator: {}
+  enabled: false
+  exporter:
+    configProperties: ""
+    enabled: false
+    image: bitnami/jmx-exporter:1.0.1
+    port: 5556
+    pullPolicy: Always
+    resources: {}
+    securityContext: {}
+  registryPort: 9080
+  serverPort: 9081
+  worker: {}
+kafka:
+  mountPath: /etc/trino/schemas
+  tableDescriptions: {}
