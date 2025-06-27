@@ -1,3 +1,78 @@
-kubectl get pods -n trino -o jsonpath='{range .items[*]}{"\n---\nPod: "}{.metadata.name}{"\n"}{range .spec.containers[*].volumeMounts[*]}{.mountPath}{"\n"}{end}{end}' | grep -E "^---|^/etc/trino"
+image:
+  repository: <your-private-registry>/your-custom-trino
+  tag: "474"
+  pullPolicy: IfNotPresent
 
+coordinator:
+  replicaCount: 1
 
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+
+  config:
+    data: |
+      coordinator=true
+      node-scheduler.include-coordinator=true
+      http-server.http.port=8080
+      query.max-memory=2GB
+      query.max-memory-per-node=1GB
+      discovery-server.enabled=true
+      discovery.uri=http://localhost:8080
+
+  jvm:
+    data: |
+      -server
+      -Xmx2G
+      -XX:+UseG1GC
+      -XX:+UseGCOverheadLimit
+
+  log:
+    data: |
+      io.trino=INFO
+
+  catalogs:
+    tpch: |
+      connector.name=tpch
+
+worker:
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+
+  config:
+    data: |
+      coordinator=false
+      http-server.http.port=8080
+      query.max-memory=2GB
+      query.max-memory-per-node=1GB
+      discovery.uri=http://trino-coordinator:8080
+
+  jvm:
+    data: |
+      -server
+      -Xmx2G
+      -XX:+UseG1GC
+      -XX:+UseGCOverheadLimit
+
+  log:
+    data: |
+      io.trino=INFO
+
+  catalogs:
+    tpch: |
+      connector.name=tpch
+
+service:
+  type: ClusterIP
+  port: 8080
