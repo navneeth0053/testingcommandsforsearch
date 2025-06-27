@@ -1,2 +1,18 @@
-wget https://repo1.maven.org/maven2/io/trino/trino-cli/474/trino-cli-474-executable.jar -O trino
-chmod +x trino
+
+  passwordAuthenticatorFiles:
+    ldap.properties: |
+      password-authenticator.name=ldap
+      ldap.url=ldaps://ldap.example.com:636                     # 🔁 your LDAP server
+      ldap.user-bind-pattern=uid=${USER},ou=users,dc=example,dc=com
+      ldap.ssl-truststore-path=/etc/trino/ldap-certs/cacerts.pem
+      ldap.ssl-truststore-password=changeit
+
+  additionalVolumes:
+    - name: ldap-certs
+      secret:
+        secretName: ldap-ca-cert
+
+  additionalVolumeMounts:
+    - name: ldap-certs
+      mountPath: /etc/trino/ldap-certs
+      readOnly: true
