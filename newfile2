@@ -1,145 +1,33 @@
-1)
-helm template trino ./trino-1.38.0.tgz -f values.yaml -n trino |grep -A10 "config.properties"
-  config.properties: |
-    coordinator=true
-    node-scheduler.include-coordinator=false
-    http-server.http.port=8080
-    query.max-memory=4GB
-    query.max-memory-per-node=1GB
-    discovery.uri=http://localhost:8080
++ launcher_opts=(--etc-dir /etc/trino)
++ grep -s -q node.id /etc/trino/node.properties
++ launcher_opts+=("-Dnode.id=${HOSTNAME}")
++ exec /usr/lib/trino/bin/launcher run --etc-dir /etc/trino -Dnode.id=trino-coordinator-577b45c48b-xqklh
+WARNING: Using incubator modules: jdk.incubator.vector
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.openjdk.jol.vm.HotspotUnsafe (file:/usr/lib/trino/lib/org.openjdk.jol_jol-core-0.17.jar)
+WARNING: Please consider reporting this to the maintainers of class org.openjdk.jol.vm.HotspotUnsafe
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+Jun 27, 2025 9:19:10 PM io.airlift.log.Logger info
+INFO: Java version: 24
+2025-06-27T21:19:10.314Z        INFO    main    io.airlift.log.Logging  Logging to stderr
+2025-06-27T21:19:10.323Z        INFO    main    Bootstrap       Loading secrets plugins
+2025-06-27T21:19:10.323Z        INFO    main    Bootstrap       Loading configuration
+2025-06-27T21:19:10.424Z        INFO    main    org.hibernate.validator.internal.util.Version   HV000001: Hibernate Validator 8.0.2.Final
+2025-06-27T21:19:10.574Z        INFO    main    Bootstrap       Initializing logging
+2025-06-27T21:19:10.630Z        INFO    main    io.airlift.log.Logging  Disabling stderr output
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.jna.Native in an unnamed module (file:/usr/lib/trino/lib/net.java.dev.jna_jna-5.17.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-  log.properties: |
-    io.trino=INFO
----
---
-  config.properties: |
-    coordinator=false
-    http-server.http.port=8080
-    query.max-memory=4GB
-    query.max-memory-per-node=1GB
-    discovery.uri=http://trino:8080
+2025-06-27T21:19:11.364Z        WARN    main    oshi.software.os.linux.LinuxOperatingSystem     Did not find udev library in operating system. Some features may not work.
+2025-06-27T21:19:11.698Z        ERROR   main    io.trino.server.Server  Configuration is invalid
+==========
 
-  log.properties: |
-    io.trino=INFO
----
-# Source: trino/templates/configmap-worker.yaml
+Errors:
 
+1) Invalid value '"true"' for type io.airlift.http.server.HttpServerConfig$ProcessForwardedMode (property 'http-server.process-forwarded') in order to call [public io.airlift.http.server.HttpServerConfig io.airlift.http.server.HttpServerConfig.setProcessForwarded(io.airlift.http.server.HttpServerConfig$ProcessForwardedMode)]
 
+Warnings:
 
-2)
-COMPUTED VALUES:
-accessControl: {}
-additionalCatalogs: {}
-additionalConfigProperties: []
-additionalExchangeManagerProperties: []
-additionalLogProperties: []
-additionalNodeProperties: []
-auth: {}
-catalogs:
-  tpcds: |
-    connector.name=tpcds
-    tpcds.splits-per-node=4
-  tpch: |
-    connector.name=tpch
-    tpch.splits-per-node=4
-commonLabels: {}
-configMounts: []
-containerSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-coordinator:
-  additionalConfigFiles: {}
-  additionalExposedPorts: {}
-  additionalJVMConfig: []
-  additionalVolumeMounts: []
-  additionalVolumes: []
-  affinity: {}
-  annotations: {}
-  catalogs:
-    tpch: |
-      connector.name=tpch
-  config:
-    data: |
-      coordinator=true
-      node-scheduler.include-coordinator=true
-      http-server.http.port=8080
-      http-server.process-forwarded=true
-      http-server.authentication.allow-insecure-over-http=true
-      query.max-memory=2GB
-      query.max-memory-per-node=1GB
-      discovery-server.enabled=true
-      discovery.uri=http://localhost:8080
-    memory:
-      heapHeadroomPerNode: ""
-    nodeScheduler:
-      includeCoordinator: false
-    query:
-      maxMemoryPerNode: 1GB
-  configMounts: []
-  deployment:
-    annotations: {}
-    progressDeadlineSeconds: 600
-    revisionHistoryLimit: 10
-    strategy:
-      rollingUpdate:
-        maxSurge: 25%
-        maxUnavailable: 25%
-      type: RollingUpdate
-  jvm:
-    data: |
-      -server
-      -Xmx4G
-      -XX:+UseG1GC
-    gcMethod:
-      g1:
-        heapRegionSize: 32M
-      type: UseG1GC
-    maxHeapSize: 8G
-  labels: {}
-  lifecycle: {}
-  livenessProbe: {}
-  nodeSelector: {}
-  readinessProbe: {}
-  replicaCount: 1
-  resources: {}
-  secretMounts: []
-  terminationGracePeriodSeconds: 30
-  tolerations: []
-coordinatorNameOverride: null
-env: []
-envFrom: []
-eventListenerProperties: []
-image:
-  digest: ""
-  pullPolicy: IfNotPresent
-  registry: ""
-  repository: trinodb/trino
-  tag: 474
-  useRepositoryAsSoleImageReference: false
-imagePullSecrets: []
-ingress:
-  annotations: {}
-  className: ""
-  enabled: false
-  hosts: []
-  tls: []
-initContainers: {}
-jmx:
-  coordinator: {}
-  enabled: false
-  exporter:
-    configProperties: ""
-    enabled: false
-    image: bitnami/jmx-exporter:1.0.1
-    port: 5556
-    pullPolicy: Always
-    resources: {}
-    securityContext: {}
-  registryPort: 9080
-  serverPort: 9081
-  worker: {}
-kafka:
-  mountPath: /etc/trino/schemas
-  tableDescriptions: {}
+1) Configuration property 'discovery-server.enabled' is deprecated and should not be used
