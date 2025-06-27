@@ -1,24 +1,73 @@
+image:
+  repository: <your-registry>/trino
+  tag: "474"
+  pullPolicy: IfNotPresent
 
-    volumeMounts:
-    - mountPath: /etc/trino
-      name: config-volume
-    - mountPath: /etc/trino/catalog
-      name: catalog-volume
-    - mountPath: /etc/trino/schemas
-      name: schemas-volume
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: kube-api-access-58fgi
-      readOnly: true
-  dnsPolicy: ClusterFirst
-[root@lpdviskbtm01 trino]# kubectl get pod trino-coordinator-64c9869d97-bhljp -o yaml -n trino |grep -A10 volumes:
-  volumes:
-  - configMap:
-      defaultMode: 420
-      name: trino-coordinator
-    name: config-volume
-  - configMap:
-      defaultMode: 420
-      name: trino-catalog
-    name: catalog-volume
-  - configMap:
-      defaultMode: 420
+coordinator:
+  replicaCount: 1
+
+  config:
+    path: /etc/trino-config/config.properties
+    data: |
+      coordinator=true
+      node-scheduler.include-coordinator=true
+      http-server.http.port=8080
+      discovery-server.enabled=true
+      discovery.uri=http://localhost:8080
+
+  jvm:
+    config:
+      path: /etc/trino-config/jvm.config
+      data: |
+        -server
+        -Xmx1G
+        -XX:+UseG1GC
+        -XX:+UseGCOverheadLimit
+
+  log:
+    config:
+      path: /etc/trino-config/log.properties
+      data: |
+        io.trino=INFO
+
+  catalogs:
+    tpch: |
+      connector.name=tpch
+
+  extraEnv:
+    - name: JAVA_TOOL_OPTIONS
+      value: "-Dlog.level=INFO"
+
+worker:
+  replicaCount: 2
+
+  config:
+    path: /etc/trino-config/config.properties
+    data: |
+      coordinator=false
+      http-server.http.port=8080
+      discovery.uri=http://trino-coordinator:8080
+
+  jvm:
+    config:
+      path: /etc/trino-config/jvm.config
+      data: |
+        -server
+        -Xmx1G
+        -XX:+UseG1GC
+        -XX:+UseGCOverheadLimit
+
+  log:
+    config:
+      path: /etc/trino-config/log.properties
+      data: |
+        io.trino=INFO
+
+  catalogs:
+    tpch: |
+      connector.name=tpch
+
+service:
+  type: ClusterIP
+  port: 8080
+
