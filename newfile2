@@ -1,0 +1,103 @@
+image:
+  repository: <your-registry>/trino
+  tag: "474"
+  pullPolicy: IfNotPresent
+
+coordinator:
+  replicaCount: 1
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    allowPrivilegeEscalation: true
+    capabilities:
+      drop: []
+
+  # Don't mount anything into /etc/trino
+  config:
+    path: /etc/trino/config.properties
+    data: |
+      coordinator=true
+      node-scheduler.include-coordinator=true
+      http-server.http.port=8080
+      query.max-memory=512MB
+      query.max-memory-per-node=256MB
+      discovery-server.enabled=true
+      discovery.uri=http://localhost:8080
+
+  jvm:
+    config:
+      path: /etc/trino/jvm.config
+      data: |
+        -server
+        -Xmx1G
+        -XX:+UseG1GC
+        -XX:+UseGCOverheadLimit
+
+  log:
+    config:
+      path: /etc/trino/log.properties
+      data: |
+        io.trino=INFO
+
+worker:
+  replicaCount: 2
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    requests:
+      cpu: "0.5"
+      memory: "1Gi"
+
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    allowPrivilegeEscalation: true
+    capabilities:
+      drop: []
+
+  config:
+    path: /etc/trino/config.properties
+    data: |
+      coordinator=false
+      http-server.http.port=8080
+      query.max-memory=512MB
+      query.max-memory-per-node=256MB
+      discovery.uri=http://trino-coordinator:8080
+
+  jvm:
+    config:
+      path: /etc/trino/jvm.config
+      data: |
+        -server
+        -Xmx1G
+        -XX:+UseG1GC
+        -XX:+UseGCOverheadLimit
+
+  log:
+    config:
+      path: /etc/trino/log.properties
+      data: |
+        io.trino=INFO
+
+service:
+  type: ClusterIP
+  port: 8080
